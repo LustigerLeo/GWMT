@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passwortgeschützte Seite</title>
+</head>
+<body>
+    <div class="container">
+        <h2>Passwortgeschützte Seite</h2>
+        <p>Bitte geben Sie das Passwort ein, um fortzufahren:</p>
+        <input type="password" id="password" placeholder="Passwort eingeben">
+        <input type="button" value="Weiter" onclick="checkPassword()">
+        <p id="error-message" style="color:red;"></p>
+    </div>
+
+    <script>
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            const correctPassword= "Dürrenmatt";
+
+            if (password === correctPassword) {
+                window.location.href = 'internIndex7.html';
+            } else {
+                document.getElementById('error-message').innerText = 'Falsches Passwort!';
+            }
+        }
+    </script>
+</body>
+</html>
