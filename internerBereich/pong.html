@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Spiel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: black;
+        }
+    </style>
+</head>
+<body>
+<canvas id="pongCanvas" width="800" height="600"></canvas>
+
+<script>
+    const canvas = document.getElementById('pongCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Ball
+    const ball = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 10,
+        speed: 5,
+        velocityX: 5,
+        velocityY: 5,
+        color: 'white'
+    };
+
+    // Spieler (User) Paddle
+    const userPaddle = {
+        x: 10,
+        y: canvas.height / 2 - 50,
+        width: 10,
+        height: 100,
+        color: 'white',
+        score: 0
+    };
+
+    // Computer Paddle
+    const computerPaddle = {
+        x: canvas.width - 20,
+        y: canvas.height / 2 - 50,
+        width: 10,
+        height: 100,
+        color: 'white',
+        score: 0
+    };
+
+    // Netz (Mittellinie)
+    const net = {
+        x: canvas.width / 2 - 1,
+        y: 0,
+        width: 2,
+        height: canvas.height,
+        color: 'white'
+    };
+
+    // Zeichne Rechteck (Paddle, Ball)
+    function drawRect(x, y, width, height, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, width, height);
+    }
+
+    // Zeichne Kreis (Ball)
+    function drawCircle(x, y, radius, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Zeichne Text (Punkte)
+    function drawText(text, x, y, color) {
+        ctx.fillStyle = color;
+        ctx.font = '35px Arial';
+        ctx.fillText(text, x, y);
+    }
+
+    // Bewegung der Schläger
+    canvas.addEventListener('mousemove', movePaddle);
+    function movePaddle(evt) {
+        let rect = canvas.getBoundingClientRect();
+        userPaddle.y = evt.clientY - rect.top - userPaddle.height / 2;
+    }
+
+    // Kollisionserkennung zwischen Ball und Schläger
+    function collision(ball, paddle) {
+        paddle.top = paddle.y;
+        paddle.bottom = paddle.y + paddle.height;
+        paddle.left = paddle.x;
+        paddle.right = paddle.x + paddle.width;
+
+        ball.top = ball.y - ball.radius;
+        ball.bottom = ball.y + ball.radius;
+        ball.left = ball.x - ball.radius;
+        ball.right = ball.x + ball.radius;
+
+        return ball.right > paddle.left && ball.bottom > paddle.top && ball.left < paddle.right && ball.top < paddle.bottom;
+    }
+
+    // Ball zurücksetzen
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.velocityX = -ball.velocityX;
+    }
+
+    // Ball Update (Bewegung und Kollision)
+    function update() {
+        ball.x += ball.velocityX;
+        ball.y += ball.velocityY;
+
+        // Computer Paddle bewegt sich automatisch
+        computerPaddle.y += ((ball.y - (computerPaddle.y + computerPaddle.height / 2))) * 0.1;
+
+        // Ball prallt von oberen und unteren Wänden ab
+        if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+            ball.velocityY = -ball.velocityY;
+        }
+
+        // Überprüfe, ob Ball den Schläger des Spielers oder Computers trifft
+        let player = (ball.x < canvas.width / 2) ? userPaddle : computerPaddle;
+
+        if (collision(ball, player)) {
+            let collidePoint = ball.y - (player.y + player.height / 2);
+            collidePoint = collidePoint / (player.height / 2);
+            let angleRad = collidePoint * (Math.PI / 4);
+
+            let direction = (ball.x < canvas.width / 2) ? 1 : -1;
+            ball.velocityX = direction * ball.speed * Math.cos(angleRad);
+            ball.velocityY = ball.speed * Math.sin(angleRad);
+
+            ball.speed += 0.2; // Erhöht die Geschwindigkeit nach jeder Kollision
+        }
+
+        // Punkte für Computer oder Spieler
+        if (ball.x - ball.radius < 0) {
+            computerPaddle.score++;
+            resetBall();
+        } else if (ball.x + ball.radius > canvas.width) {
+            userPaddle.score++;
+            resetBall();
+        }
+    }
+
+    // Zeichnen des Spiels
+    function render() {
+        // Spielfeld
+        drawRect(0, 0, canvas.width, canvas.height, 'black');
+
+        // Netz
+        drawRect(net.x, net.y, net.width, net.height, net.color);
+
+        // Punkte
+        drawText(userPaddle.score, canvas.width / 4, canvas.height / 5, 'white');
+        drawText(computerPaddle.score, 3 * canvas.width / 4, canvas.height / 5, 'white');
+
+        // Paddles
+        drawRect(userPaddle.x, userPaddle.y, userPaddle.width, userPaddle.height, userPaddle.color);
+        drawRect(computerPaddle.x, computerPaddle.y, computerPaddle.width, computerPaddle.height, computerPaddle.color);
+
+        // Ball
+        drawCircle(ball.x, ball.y, ball.radius, ball.color);
+    }
+
+    // Spielschleife
+    function gameLoop() {
+        update();
+        render();
+    }
+
+    // 60 FPS
+    const fps = 60;
+    setInterval(gameLoop, 1000 / fps);
+</script>
+</body>
+</html>
